@@ -21,7 +21,7 @@ public class ConsoleMenu {
     private final ReportService reportService;
 
     private static final Path OUTPUT_DIR =
-            Path.of("src/main/resources/output");
+            Path.of("resources/output");
 
     public ConsoleMenu(GradeBookService gradeBookService,
                        ReportService reportService) {
