@@ -1,0 +1,64 @@
+=== Test run log ===
+Command: ADD_GROUP;IP-11;1
+  OK: created group Group{1, 'IP-11', year=1}
+
+Command: ADD_GROUP;IP-12;1
+  OK: created group Group{2, 'IP-12', year=1}
+
+Command: ADD_TEACHER;Ivan;Ivanenko;Computer Science;ivan.ivanenko@example.com
+  OK: created teacher Teacher{3, Ivan Ivanenko}
+
+Command: ADD_TEACHER;Olha;Petrenko;Mathematics;olha.petrenko@example.com
+  OK: created teacher Teacher{4, Olha Petrenko}
+
+Command: ADD_COURSE;Programming 1;1;2024;1;4
+  OK: created course Course{3, 'Programming 1', sem=1, year=2024}
+
+Command: ADD_COURSE;Linear Algebra;1;2024;2;4
+  OK: created course Course{4, 'Linear Algebra', sem=1, year=2024}
+
+Command: ADD_STUDENT;Maksym;Pashchenko;maksym.pashchenko@example.com;1;2024
+  OK: created student Student{1, Maksym Pashchenko}
+
+Command: ADD_STUDENT;Andrii;Shevchenko;andrii.shevchenko@example.com;1;2024
+  OK: created student Student{2, Andrii Shevchenko}
+
+Command: ADD_STUDENT;Iryna;Koval;iryna.koval@example.com;2;2024
+  OK: created student Student{3, Iryna Koval}
+
+Command: SET_GRADE;1;1;1;95.5;2024-10-01
+  OK: added grade Grade{1, student=1, course=1, value=95.5, date=2024-10-01}
+
+Command: SET_GRADE;1;1;1;88.0;2024-10-15
+  OK: added grade Grade{2, student=1, course=1, value=88.0, date=2024-10-15}
+
+Command: SET_GRADE;2;1;1;76.0;2024-10-20
+  OK: added grade Grade{3, student=2, course=1, value=76.0, date=2024-10-20}
+
+Command: SET_GRADE;1;2;2;90.0;2024-11-01
+  OK: added grade Grade{4, student=1, course=2, value=90.0, date=2024-11-01}
+
+Command: SET_GRADE;3;2;2;82.5;2024-11-05
+  OK: added grade Grade{5, student=3, course=2, value=82.5, date=2024-11-05}
+
+Command: REPORT_STUDENT;1
+  Student average: 91.17
+
+Command: REPORT_STUDENT;2
+  Student average: 76.00
+
+Command: REPORT_GROUP_COURSE;1;1
+  Group-course average: 86.50
+
+Command: REPORT_GROUP_COURSE;1;2
+  Group-course average: 90.00
+
+Command: REPORT_GROUP_COURSE;2;2
+  Group-course average: 82.50
+
+Command: REPORT_TEACHER;1
+  Teacher average: 86.50
+
+Command: REPORT_TEACHER;2
+  Teacher average: 86.25
+

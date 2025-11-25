@@ -7,8 +7,8 @@ import java.sql.SQLException;
 public final class DataSourceProvider {
 
     private static final String URL = "jdbc:postgresql://localhost:5432/gradebook";
-    private static final String USER = "postgres";      // TODO: заміни на свій логін
-    private static final String PASSWORD = "password";  // TODO: заміни на свій пароль
+    private static final String USER = "postgres";
+    private static final String PASSWORD = "12345";
 
     static {
         try {

@@ -1,4 +1,4 @@
-package ua.knu.pashchenko_maksym.dao;
+package ua.knu.pashchenko_maksym.dao.exception;
 
 public class DaoException extends RuntimeException {
 

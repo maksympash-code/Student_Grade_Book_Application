@@ -1,12 +1,10 @@
 package ua.knu.pashchenko_maksym.dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import ua.knu.pashchenko_maksym.dao.exception.DaoException;
 import ua.knu.pashchenko_maksym.model.Teacher;
 
 public class JdbcTeacherDao implements TeacherDao {
@@ -24,8 +22,8 @@ public class JdbcTeacherDao implements TeacherDao {
             SELECT_BASE + "WHERE last_name = ? ORDER BY first_name";
 
     private static final String INSERT_SQL =
-            "INSERT INTO teachers (first_name, last_name, department, email) "
-                    + "VALUES (?, ?, ?, ?) RETURNING id";
+            "INSERT INTO teachers(first_name, last_name, department, email) " +
+                    "VALUES (?, ?, ?, ?)";
 
     private static final String UPDATE_SQL =
             "UPDATE teachers SET first_name = ?, last_name = ?, department = ?, email = ? "
@@ -90,37 +88,40 @@ public class JdbcTeacherDao implements TeacherDao {
 
     @Override
     public Teacher insert(Teacher teacher) {
+        if (teacher == null) {
+            throw new IllegalArgumentException("teacher must not be null");
+        }
+
         try (Connection connection = DataSourceProvider.getConnection();
-             PreparedStatement ps = connection.prepareStatement(INSERT_SQL)) {
+             PreparedStatement ps = connection.prepareStatement(
+                     INSERT_SQL,
+                     Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, teacher.getFirstName());
             ps.setString(2, teacher.getLastName());
+            ps.setString(3, teacher.getDepartment());
+            ps.setString(4, teacher.getEmail()); // <-- тепер колонка є
 
-            if (teacher.getDepartment() != null) {
-                ps.setString(3, teacher.getDepartment());
-            } else {
-                ps.setNull(3, Types.VARCHAR);
+            int affected = ps.executeUpdate();
+            if (affected == 0) {
+                throw new DaoException("Inserting teacher failed, no rows affected: " + teacher);
             }
 
-            if (teacher.getEmail() != null) {
-                ps.setString(4, teacher.getEmail());
-            } else {
-                ps.setNull(4, Types.VARCHAR);
-            }
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    long id = rs.getLong("id");
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) {
+                    long id = keys.getLong(1);
                     teacher.setId(id);
+                } else {
+                    throw new DaoException("Inserting teacher failed, no ID obtained: " + teacher);
                 }
             }
 
             return teacher;
-
         } catch (SQLException e) {
             throw new DaoException("Error inserting teacher " + teacher, e);
         }
     }
+
 
     @Override
     public boolean update(Teacher teacher) {

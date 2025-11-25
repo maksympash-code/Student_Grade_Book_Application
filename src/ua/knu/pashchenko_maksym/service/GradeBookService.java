@@ -75,10 +75,16 @@ public class GradeBookService {
     }
 
 
-    public Group createGroup(String name, int year) {
+    public Group createGroup(String name, short year) {
+        Group existing = groupDao.findByName(name);
+        if (existing != null) {
+            return existing;
+        }
+
         Group group = new Group();
         group.setName(name);
-        group.setYear((short) year);
+        group.setYear(year);
+
         return groupDao.insert(group);
     }
 
@@ -182,6 +188,7 @@ public class GradeBookService {
     public List<Teacher> findTeachersByLastName(String lastName) {
         return teacherDao.findByLastName(lastName);
     }
+
 
     public Grade addGrade(Long studentId,
                           Long courseId,

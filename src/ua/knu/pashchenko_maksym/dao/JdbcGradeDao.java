@@ -10,6 +10,8 @@ import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import ua.knu.pashchenko_maksym.dao.exception.DaoException;
 import ua.knu.pashchenko_maksym.model.Grade;
 
 public class JdbcGradeDao implements GradeDao {

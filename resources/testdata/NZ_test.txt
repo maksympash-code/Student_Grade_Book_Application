@@ -1,0 +1,35 @@
+# NZ_test.txt — тестовий сценарій для GradeBook
+# Порожні рядки і рядки, що починаються з #, ігноруються.
+
+ADD_GROUP;IP-11;1
+ADD_GROUP;IP-12;1
+
+ADD_TEACHER;Ivan;Ivanenko;Computer Science;ivan.ivanenko@example.com
+ADD_TEACHER;Olha;Petrenko;Mathematics;olha.petrenko@example.com
+
+# name;semester;year;teacherId;credits
+ADD_COURSE;Programming 1;1;2024;1;4
+ADD_COURSE;Linear Algebra;1;2024;2;4
+
+# firstName;lastName;email;groupId;enrollmentYear
+ADD_STUDENT;Maksym;Pashchenko;maksym.pashchenko@example.com;1;2024
+ADD_STUDENT;Andrii;Shevchenko;andrii.shevchenko@example.com;1;2024
+ADD_STUDENT;Iryna;Koval;iryna.koval@example.com;2;2024
+
+# studentId;courseId;teacherIdOr0;value;date(YYYY-MM-DD)
+SET_GRADE;1;1;1;95.5;2024-10-01
+SET_GRADE;1;1;1;88.0;2024-10-15
+SET_GRADE;2;1;1;76.0;2024-10-20
+
+SET_GRADE;1;2;2;90.0;2024-11-01
+SET_GRADE;3;2;2;82.5;2024-11-05
+
+REPORT_STUDENT;1
+REPORT_STUDENT;2
+
+REPORT_GROUP_COURSE;1;1
+REPORT_GROUP_COURSE;1;2
+REPORT_GROUP_COURSE;2;2
+
+REPORT_TEACHER;1
+REPORT_TEACHER;2
