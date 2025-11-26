@@ -16,6 +16,10 @@ import ua.knu.pashchenko_maksym.dao.JdbcTeacherDao;
 import ua.knu.pashchenko_maksym.dao.StudentDao;
 import ua.knu.pashchenko_maksym.dao.TeacherDao;
 import ua.knu.pashchenko_maksym.menu.ConsoleMenu;
+import ua.knu.pashchenko_maksym.model.Course;
+import ua.knu.pashchenko_maksym.model.Group;
+import ua.knu.pashchenko_maksym.model.Student;
+import ua.knu.pashchenko_maksym.model.Teacher;
 import ua.knu.pashchenko_maksym.service.GradeBookService;
 import ua.knu.pashchenko_maksym.service.ReportService;
 import ua.knu.pashchenko_maksym.util.IoUtil;
@@ -29,7 +33,6 @@ public class Main {
             Path.of("resources/testdata/NZ_test.txt");
     private static final Path OUTPUT_TEXT_FILE =
             Path.of("resources/output/result.txt");
-
 
     public static void main(String[] args) {
         StudentDao studentDao = new JdbcStudentDao();
@@ -65,8 +68,9 @@ public class Main {
     /**
      * Simple test runner that reads commands from NZ_test.txt and writes summary to result.txt.
      *
-     * Формат рядків у NZ_test.txt (приклад):
+     * <p>Формат рядків у NZ_test.txt (приклад):
      *
+     * <pre>
      * ADD_GROUP;IP-11;1
      * ADD_STUDENT;Maksym;Pashchenko;maks@example.com;1;2024
      * ADD_TEACHER;Ivan;Ivanenko;CS;ivan@example.com
@@ -75,6 +79,7 @@ public class Main {
      * REPORT_STUDENT;1
      * REPORT_GROUP_COURSE;1;1
      * REPORT_TEACHER;1
+     * </pre>
      *
      * Порожні рядки та рядки, що починаються з #, ігноруються.
      */
@@ -282,5 +287,161 @@ public class Main {
                 .append(String.format("%.2f", avg))
                 .append('\n');
         reportService.printTeacherReport(teacherId);
+    }
+
+    private static void handleEditStudent(GradeBookService service) {
+        long id = IoUtil.readLong("ID студента для редагування: ");
+        Student student = service.getStudentById(id);
+        if (student == null) {
+            System.out.println("Студента з таким ID не знайдено.");
+            return;
+        }
+
+        System.out.println("Поточні дані: " + student);
+
+        String firstName = IoUtil.readNonEmptyLine("Нове ім'я: ");
+        String lastName = IoUtil.readNonEmptyLine("Нове прізвище: ");
+        String email = IoUtil.readNonEmptyLine("Новий email: ");
+        long groupId = IoUtil.readLong("ID групи: ");
+        int enrollmentYear = IoUtil.readInt("Рік вступу: ");
+
+        student.setFirstName(firstName);
+        student.setLastName(lastName);
+        student.setEmail(email);
+        student.setGroupId(groupId);
+        student.setEnrollmentYear((short) enrollmentYear);
+
+        boolean ok = service.updateStudent(student);
+        System.out.println(ok ? "Студента оновлено." : "Помилка оновлення студента.");
+    }
+
+    private static void handleDeleteStudent(GradeBookService service) {
+        long id = IoUtil.readLong("ID студента для видалення: ");
+        boolean ok = service.deleteStudent(id);
+        System.out.println(ok ? "Студента видалено." : "Студента з таким ID не знайдено.");
+    }
+
+    private static void handleEditGroup(GradeBookService service) {
+        long id = IoUtil.readLong("ID групи для редагування: ");
+        Group group = service.getGroupById(id);
+        if (group == null) {
+            System.out.println("Групу з таким ID не знайдено.");
+            return;
+        }
+
+        System.out.println("Поточні дані: " + group);
+
+        String name = IoUtil.readNonEmptyLine("Нова назва групи: ");
+        int year = IoUtil.readInt("Новий курс (1-6): ");
+
+        group.setName(name);
+        group.setYear((short) year);
+
+        boolean ok = service.updateGroup(group);
+        System.out.println(ok ? "Групу оновлено." : "Помилка оновлення групи.");
+    }
+
+    private static void handleDeleteGroup(GradeBookService service) {
+        long id = IoUtil.readLong("ID групи для видалення: ");
+        boolean ok = service.deleteGroup(id);
+        System.out.println(ok ? "Групу видалено." : "Групу з таким ID не знайдено.");
+    }
+
+    private static void handleEditCourse(GradeBookService service) {
+        long id = IoUtil.readLong("ID курсу для редагування: ");
+        Course course = service.getCourseById(id);
+        if (course == null) {
+            System.out.println("Курс з таким ID не знайдено.");
+            return;
+        }
+
+        System.out.println("Поточні дані: " + course);
+
+        String name = IoUtil.readNonEmptyLine("Нова назва курсу: ");
+        int semester = IoUtil.readInt("Семестр (1-2): ");
+        int year = IoUtil.readInt("Рік викладання (наприклад 2024): ");
+        long teacherId = IoUtil.readLong("ID викладача: ");
+        int credits = IoUtil.readInt("Кількість кредитів (ECTS): ");
+
+        course.setName(name);
+        course.setSemester((short) semester);
+        course.setYear((short) year);
+        course.setTeacherId(teacherId);
+        course.setCredits((short) credits);
+
+        boolean ok = service.updateCourse(course);
+        System.out.println(ok ? "Курс оновлено." : "Помилка оновлення курсу.");
+    }
+
+    private static void handleDeleteCourse(GradeBookService service) {
+        long id = IoUtil.readLong("ID курсу для видалення: ");
+        boolean ok = service.deleteCourse(id);
+        System.out.println(ok ? "Курс видалено." : "Курс з таким ID не знайдено.");
+    }
+
+    private static void handleEditTeacher(GradeBookService service) {
+        long id = IoUtil.readLong("ID викладача для редагування: ");
+        Teacher teacher = service.getTeacherById(id);
+        if (teacher == null) {
+            System.out.println("Викладача з таким ID не знайдено.");
+            return;
+        }
+
+        System.out.println("Поточні дані: " + teacher);
+
+        String firstName = IoUtil.readNonEmptyLine("Нове ім'я: ");
+        String lastName = IoUtil.readNonEmptyLine("Нове прізвище: ");
+        String department = IoUtil.readNonEmptyLine("Новий департамент: ");
+        String email = IoUtil.readNonEmptyLine("Новий email: ");
+
+        teacher.setFirstName(firstName);
+        teacher.setLastName(lastName);
+        teacher.setDepartment(department);
+        teacher.setEmail(email);
+
+        boolean ok = service.updateTeacher(teacher);
+        System.out.println(ok ? "Викладача оновлено." : "Помилка оновлення викладача.");
+    }
+
+    private static void handleDeleteTeacher(GradeBookService service) {
+        long id = IoUtil.readLong("ID викладача для видалення: ");
+        boolean ok = service.deleteTeacher(id);
+        System.out.println(ok ? "Викладача видалено." : "Викладача з таким ID не знайдено.");
+    }
+
+    private static void handleShowAllGroups(GradeBookService service) {
+        List<Group> groups = service.getAllGroups();
+        if (groups.isEmpty()) {
+            System.out.println("Груп поки немає.");
+            return;
+        }
+        System.out.println("=== Список груп ===");
+        for (Group g : groups) {
+            System.out.println(g);
+        }
+    }
+
+    private static void handleShowAllCourses(GradeBookService service) {
+        List<Course> courses = service.getAllCourses();
+        if (courses.isEmpty()) {
+            System.out.println("Курсів поки немає.");
+            return;
+        }
+        System.out.println("=== Список курсів ===");
+        for (Course c : courses) {
+            System.out.println(c);
+        }
+    }
+
+    private static void handleShowAllTeachers(GradeBookService service) {
+        List<Teacher> teachers = service.getAllTeachers();
+        if (teachers.isEmpty()) {
+            System.out.println("Викладачів поки немає.");
+            return;
+        }
+        System.out.println("=== Список викладачів ===");
+        for (Teacher t : teachers) {
+            System.out.println(t);
+        }
     }
 }

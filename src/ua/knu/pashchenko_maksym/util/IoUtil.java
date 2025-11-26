@@ -25,7 +25,6 @@ public final class IoUtil {
         }
     }
 
-
     public static int readInt(String prompt) {
         while (true) {
             System.out.print(prompt);
@@ -48,7 +47,6 @@ public final class IoUtil {
             }
         }
     }
-
 
     public static long readLong(String prompt) {
         while (true) {
@@ -79,4 +77,3 @@ public final class IoUtil {
         return readIntInRange(prompt, minOption, maxOption);
     }
 }
-

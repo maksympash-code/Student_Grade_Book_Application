@@ -40,13 +40,15 @@ CREATE TABLE IF NOT EXISTS teachers (
 CREATE TABLE IF NOT EXISTS courses (
                                        id          BIGSERIAL PRIMARY KEY,
                                        name        VARCHAR(150) NOT NULL,
-                                       semester    SMALLINT     NOT NULL CHECK (semester BETWEEN 1 AND 2),
-                                       year        SMALLINT     NOT NULL,  -- РІК КУРСУ (відповідає моделі/DAO)
-                                       teacher_id  BIGINT       REFERENCES teachers(id) ON DELETE SET NULL
+                                       semester    SMALLINT,
+                                       year        SMALLINT,
+                                       teacher_id  BIGINT REFERENCES teachers(id) ON DELETE SET NULL,
+                                       credits     SMALLINT
 );
 
 CREATE INDEX IF NOT EXISTS idx_courses_teacher_id
     ON courses(teacher_id);
+
 
 -- Таблиця оцінок
 CREATE TABLE IF NOT EXISTS grades (
