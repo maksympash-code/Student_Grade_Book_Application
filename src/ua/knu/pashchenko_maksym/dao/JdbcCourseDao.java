@@ -11,6 +11,15 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * JDBC implementation of {@link CourseDao} for the {@code courses} table.
+ *
+ * <p>Виконує базові CRUD-операції та запити за викладачем
+ * через простий {@link java.sql.Connection} / {@link PreparedStatement}.
+ *
+ * @author Pashchenko Maksym
+ * @since 26.11.2025
+ */
 public class JdbcCourseDao implements CourseDao {
 
     private static final String SELECT_BASE =
@@ -39,6 +48,13 @@ public class JdbcCourseDao implements CourseDao {
     private static final String DELETE_SQL =
             "DELETE FROM courses WHERE id = ?";
 
+    /**
+     * Finds course by its primary key.
+     *
+     * @param id course identifier
+     * @return {@link Course} instance or {@code null}, if not found or id is {@code null}
+     * @throws DaoException if a database access error occurs
+     */
     @Override
     public Course findById(Long id) {
         if (id == null) {
@@ -62,6 +78,12 @@ public class JdbcCourseDao implements CourseDao {
         }
     }
 
+    /**
+     * Returns all courses ordered by id.
+     *
+     * @return list of courses (possibly empty, never {@code null})
+     * @throws DaoException if a database access error occurs
+     */
     @Override
     public List<Course> findAll() {
         List<Course> result = new ArrayList<>();
@@ -80,6 +102,13 @@ public class JdbcCourseDao implements CourseDao {
         }
     }
 
+    /**
+     * Finds course by its exact name.
+     *
+     * @param name course name
+     * @return {@link Course} or {@code null}, якщо не знайдено або name порожнє
+     * @throws DaoException if a database access error occurs
+     */
     @Override
     public Course findByName(String name) {
         if (name == null || name.isBlank()) {
@@ -103,6 +132,13 @@ public class JdbcCourseDao implements CourseDao {
         }
     }
 
+    /**
+     * Returns all courses taught by a given teacher.
+     *
+     * @param teacherId teacher identifier
+     * @return list of courses (empty list if {@code teacherId} is {@code null} or нічого не знайдено)
+     * @throws DaoException if a database access error occurs
+     */
     @Override
     public List<Course> findByTeacherId(Long teacherId) {
         List<Course> result = new ArrayList<>();
@@ -127,6 +163,16 @@ public class JdbcCourseDao implements CourseDao {
         }
     }
 
+    /**
+     * Inserts a new course row into the database.
+     *
+     * <p>Після успішної вставки встановлює id в обʼєкті {@code course}.
+     *
+     * @param course non-null course to insert
+     * @return the same {@link Course} instance with populated id
+     * @throws IllegalArgumentException if {@code course} is {@code null}
+     * @throws DaoException             if insert fails or DB error occurs
+     */
     @Override
     public Course insert(Course course) {
         if (course == null) {
@@ -168,6 +214,14 @@ public class JdbcCourseDao implements CourseDao {
         }
     }
 
+    /**
+     * Updates an existing course row.
+     *
+     * @param course course with non-null id and новими даними
+     * @return {@code true} if at least one row was updated, {@code false} if id not found
+     * @throws IllegalArgumentException if course or its id is {@code null}
+     * @throws DaoException             if a database access error occurs
+     */
     @Override
     public boolean update(Course course) {
         if (course == null || course.getId() == null) {
@@ -196,6 +250,13 @@ public class JdbcCourseDao implements CourseDao {
         }
     }
 
+    /**
+     * Deletes course by id.
+     *
+     * @param id course identifier
+     * @return {@code true} if a row was deleted, {@code false} if id був {@code null} або не знайдено
+     * @throws DaoException if a database access error occurs
+     */
     @Override
     public boolean delete(Long id) {
         if (id == null) {
@@ -214,6 +275,13 @@ public class JdbcCourseDao implements CourseDao {
         }
     }
 
+    /**
+     * Maps current row of {@link ResultSet} to a {@link Course} instance.
+     *
+     * @param rs result set positioned at a valid row
+     * @return mapped {@link Course}
+     * @throws SQLException if column access fails
+     */
     private Course mapRow(ResultSet rs) throws SQLException {
         Course course = new Course();
         course.setId(rs.getLong("id"));

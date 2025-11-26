@@ -13,7 +13,14 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * JDBC implementation of GroupDao for table "groups".
+ * JDBC-реалізація {@link GroupDao} для таблиці {@code groups}.
+ *
+ * <p>Інкапсулює всі типові операції над академічними групами:
+ * пошук, вставку, оновлення та видалення. Працює без ORM,
+ * напряму через {@link java.sql.Connection} та {@link PreparedStatement}.
+ *
+ * @author Pashchenko Maksym
+ * @since 26.11.2025
  */
 public class JdbcGroupDao implements GroupDao {
 
@@ -39,6 +46,14 @@ public class JdbcGroupDao implements GroupDao {
     // findById (Long) + findById(long)
     // =============================
 
+    /**
+     * Повертає групу за її id.
+     *
+     * @param id ідентифікатор групи, не {@code null}
+     * @return знайдена {@link Group} або {@code null}, якщо групу не знайдено
+     * @throws IllegalArgumentException якщо {@code id == null}
+     * @throws DaoException             у разі помилки доступу до БД
+     */
     @Override
     public Group findById(Long id) {
         if (id == null) {
@@ -47,11 +62,25 @@ public class JdbcGroupDao implements GroupDao {
         return findByIdInternal(id);
     }
 
+    /**
+     * Повертає групу як {@link Optional}, зручну для подальшої обробки.
+     *
+     * @param id ідентифікатор групи
+     * @return {@link Optional} з {@link Group} або {@link Optional#empty()}
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public Optional<Group> findById(long id) {
         return Optional.ofNullable(findByIdInternal(id));
     }
 
+    /**
+     * Внутрішня реалізація пошуку групи за id.
+     *
+     * @param id ідентифікатор групи
+     * @return група або {@code null}, якщо не знайдено
+     * @throws DaoException у разі помилки доступу до БД
+     */
     private Group findByIdInternal(long id) {
         try (Connection connection = DataSourceProvider.getConnection();
              PreparedStatement ps = connection.prepareStatement(FIND_BY_ID_SQL)) {
@@ -73,6 +102,12 @@ public class JdbcGroupDao implements GroupDao {
     // findAll
     // =============================
 
+    /**
+     * Повертає всі групи, відсортовані за назвою.
+     *
+     * @return список груп (може бути порожнім, але не {@code null})
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public List<Group> findAll() {
         List<Group> result = new ArrayList<>();
@@ -95,6 +130,14 @@ public class JdbcGroupDao implements GroupDao {
     // findByName
     // =============================
 
+    /**
+     * Пошук групи за унікальною назвою.
+     *
+     * @param name назва групи (наприклад, {@code "IP-11"}), не {@code null}
+     * @return знайдена група або {@code null}, якщо такої немає
+     * @throws IllegalArgumentException якщо {@code name == null}
+     * @throws DaoException             у разі помилки доступу до БД
+     */
     @Override
     public Group findByName(String name) {
         if (name == null) {
@@ -122,6 +165,17 @@ public class JdbcGroupDao implements GroupDao {
     // insert
     // =============================
 
+    /**
+     * Додає нову групу в таблицю {@code groups}.
+     *
+     * <p>Після успішної вставки у переданий об'єкт записується
+     * згенерований первинний ключ {@link Group#getId()}.
+     *
+     * @param group група для вставки, не {@code null}
+     * @return та сама група з оновленим id
+     * @throws IllegalArgumentException якщо {@code group == null}
+     * @throws DaoException             у разі помилки доступу до БД
+     */
     @Override
     public Group insert(Group group) {
         if (group == null) {
@@ -164,6 +218,15 @@ public class JdbcGroupDao implements GroupDao {
     // update
     // =============================
 
+    /**
+     * Оновлює існуючу групу.
+     *
+     * @param group група з заповненим {@link Group#getId()} та новими даними
+     * @return {@code true}, якщо хоча б один рядок оновлено,
+     *         {@code false}, якщо групу з таким id не знайдено
+     * @throws IllegalArgumentException якщо {@code group == null} або {@code group.getId() == null}
+     * @throws DaoException             у разі помилки доступу до БД
+     */
     @Override
     public boolean update(Group group) {
         if (group == null || group.getId() == null) {
@@ -192,6 +255,15 @@ public class JdbcGroupDao implements GroupDao {
     // delete(Long) + delete(long)
     // =============================
 
+    /**
+     * Видаляє групу за id (обгортка над {@link #delete(long)}).
+     *
+     * @param id ідентифікатор групи, не {@code null}
+     * @return {@code true}, якщо групу було видалено,
+     *         {@code false}, якщо запис не знайдено
+     * @throws IllegalArgumentException якщо {@code id == null}
+     * @throws DaoException             у разі помилки доступу до БД
+     */
     @Override
     public boolean delete(Long id) {
         if (id == null) {
@@ -200,6 +272,14 @@ public class JdbcGroupDao implements GroupDao {
         return delete(id.longValue());
     }
 
+    /**
+     * Видаляє групу за id.
+     *
+     * @param id ідентифікатор групи
+     * @return {@code true}, якщо групу було видалено,
+     *         {@code false}, якщо запис не знайдено
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public boolean delete(long id) {
         try (Connection connection = DataSourceProvider.getConnection();
@@ -217,6 +297,13 @@ public class JdbcGroupDao implements GroupDao {
     // mapper
     // =============================
 
+    /**
+     * Мапінг поточного рядка {@link ResultSet} до об'єкта {@link Group}.
+     *
+     * @param rs result set, позиціонований на рядку з даними групи
+     * @return заповнений об'єкт {@link Group}
+     * @throws SQLException у разі помилки читання з {@link ResultSet}
+     */
     private Group mapRow(ResultSet rs) throws SQLException {
         Group group = new Group();
         group.setId(rs.getLong("id"));

@@ -14,6 +14,19 @@ import java.util.List;
 import ua.knu.pashchenko_maksym.dao.exception.DaoException;
 import ua.knu.pashchenko_maksym.model.Grade;
 
+/**
+ * JDBC-реалізація {@link GradeDao} для таблиці {@code grades}.
+ *
+ * <p>Інкапсулює всі CRUD-операції та типові запити:
+ * по студенту, по курсу, по викладачу, а також по парі
+ * {@code (student, course)}.
+ *
+ * <p>Використовує простий підхід: {@link Connection} + {@link PreparedStatement}
+ * без сторонніх ORM-фреймворків.
+ *
+ * @author Pashchenko Maksym
+ * @since 26.11.2025
+ */
 public class JdbcGradeDao implements GradeDao {
 
     private static final String SELECT_BASE =
@@ -49,6 +62,13 @@ public class JdbcGradeDao implements GradeDao {
     private static final String DELETE_SQL =
             "DELETE FROM grades WHERE id = ?";
 
+    /**
+     * Пошук оцінки за її первинним ключем.
+     *
+     * @param id ідентифікатор оцінки
+     * @return {@link Grade}, якщо знайдена, або {@code null}, якщо ні
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public Grade findById(Long id) {
         try (Connection connection = DataSourceProvider.getConnection();
@@ -67,6 +87,12 @@ public class JdbcGradeDao implements GradeDao {
         }
     }
 
+    /**
+     * Повертає всі оцінки, відсортовані за датою та id.
+     *
+     * @return список оцінок (може бути порожнім, але не {@code null})
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public List<Grade> findAll() {
         List<Grade> result = new ArrayList<>();
@@ -84,6 +110,17 @@ public class JdbcGradeDao implements GradeDao {
         }
     }
 
+    /**
+     * Вставляє новий запис оцінки в таблицю {@code grades}.
+     *
+     * <p>Вимагає, щоб {@link Grade#getValue()} була не {@code null}.
+     * Після успішної вставки в об'єкт {@code grade} встановлюється згенерований id.
+     *
+     * @param grade оцінка для вставки (не {@code null})
+     * @return той самий об'єкт {@link Grade} з оновленим id
+     * @throws IllegalArgumentException якщо значення оцінки дорівнює {@code null}
+     * @throws DaoException             у разі помилки доступу до БД
+     */
     @Override
     public Grade insert(Grade grade) {
         try (Connection connection = DataSourceProvider.getConnection();
@@ -125,6 +162,15 @@ public class JdbcGradeDao implements GradeDao {
         }
     }
 
+    /**
+     * Оновлює існуючий запис оцінки.
+     *
+     * @param grade об'єкт з заповненим {@link Grade#getId()} та новими даними
+     * @return {@code true}, якщо хоча б один рядок було оновлено,
+     *         {@code false}, якщо запис з таким id не знайдений
+     * @throws IllegalArgumentException якщо id або value дорівнюють {@code null}
+     * @throws DaoException             у разі помилки доступу до БД
+     */
     @Override
     public boolean update(Grade grade) {
         if (grade.getId() == null) {
@@ -165,6 +211,14 @@ public class JdbcGradeDao implements GradeDao {
         }
     }
 
+    /**
+     * Видаляє оцінку за id.
+     *
+     * @param id ідентифікатор оцінки
+     * @return {@code true}, якщо запис був видалений,
+     *         {@code false}, якщо нічого не видалено
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public boolean delete(Long id) {
         try (Connection connection = DataSourceProvider.getConnection();
@@ -179,6 +233,13 @@ public class JdbcGradeDao implements GradeDao {
         }
     }
 
+    /**
+     * Повертає список оцінок для вказаного студента.
+     *
+     * @param studentId id студента
+     * @return список оцінок (може бути порожнім)
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public List<Grade> findByStudentId(Long studentId) {
         List<Grade> result = new ArrayList<>();
@@ -198,6 +259,13 @@ public class JdbcGradeDao implements GradeDao {
         }
     }
 
+    /**
+     * Повертає список оцінок для вказаного курсу.
+     *
+     * @param courseId id курсу
+     * @return список оцінок (може бути порожнім)
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public List<Grade> findByCourseId(Long courseId) {
         List<Grade> result = new ArrayList<>();
@@ -217,6 +285,13 @@ public class JdbcGradeDao implements GradeDao {
         }
     }
 
+    /**
+     * Повертає список оцінок, виставлених конкретним викладачем.
+     *
+     * @param teacherId id викладача
+     * @return список оцінок (може бути порожнім)
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public List<Grade> findByTeacherId(Long teacherId) {
         List<Grade> result = new ArrayList<>();
@@ -236,6 +311,14 @@ public class JdbcGradeDao implements GradeDao {
         }
     }
 
+    /**
+     * Повертає список оцінок для пари {@code (studentId, courseId)}.
+     *
+     * @param studentId id студента
+     * @param courseId  id курсу
+     * @return список оцінок (може бути порожнім)
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public List<Grade> findByStudentAndCourse(Long studentId, Long courseId) {
         List<Grade> result = new ArrayList<>();
@@ -257,6 +340,13 @@ public class JdbcGradeDao implements GradeDao {
         }
     }
 
+    /**
+     * Мапінг поточного рядка {@link ResultSet} в об'єкт {@link Grade}.
+     *
+     * @param rs result set, позиціонований на потрібному рядку
+     * @return заповнений об'єкт {@link Grade}
+     * @throws SQLException у разі помилки читання колонок
+     */
     private Grade mapRow(ResultSet rs) throws SQLException {
         Grade grade = new Grade();
         grade.setId(rs.getLong("id"));
@@ -278,4 +368,3 @@ public class JdbcGradeDao implements GradeDao {
         return grade;
     }
 }
-

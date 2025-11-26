@@ -13,21 +13,50 @@ import java.util.List;
 import ua.knu.pashchenko_maksym.dao.exception.DaoException;
 import ua.knu.pashchenko_maksym.model.Student;
 
+/**
+ * JDBC-реалізація {@link StudentDao} для таблиці {@code students}.
+ *
+ * <p>Інкапсулює типові операції по роботі зі студентами:
+ * створення, читання, оновлення, видалення, а також пошук за групою
+ * та курсом. Працює напряму через {@link java.sql.Connection} /
+ * {@link PreparedStatement} без використання ORM.
+ *
+ * <p>Очікується, що структура таблиці {@code students}
+ * відповідає вибраним колонкам у {@link #SELECT_BASE}.
+ *
+ * @author Pashchenko Maksym
+ * @since 26.11.2025
+ */
 public class JdbcStudentDao implements StudentDao {
 
+    /**
+     * Базовий SELECT для всіх запитів по студентам.
+     */
     private static final String SELECT_BASE =
             "SELECT id, first_name, last_name, email, group_id, "
                     + "enrollment_year, created_at FROM students ";
 
+    /**
+     * Пошук студента за id.
+     */
     private static final String SELECT_BY_ID =
             SELECT_BASE + "WHERE id = ?";
 
+    /**
+     * Отримання всіх студентів.
+     */
     private static final String SELECT_ALL =
             SELECT_BASE + "ORDER BY last_name, first_name";
 
+    /**
+     * Студенти конкретної академічної групи.
+     */
     private static final String SELECT_BY_GROUP =
             SELECT_BASE + "WHERE group_id = ? ORDER BY last_name, first_name";
 
+    /**
+     * Студенти, що мають оцінки з конкретного курсу.
+     */
     private static final String SELECT_BY_COURSE =
             "SELECT DISTINCT s.id, s.first_name, s.last_name, s.email, "
                     + "s.group_id, s.enrollment_year, s.created_at "
@@ -36,17 +65,33 @@ public class JdbcStudentDao implements StudentDao {
                     + "WHERE g.course_id = ? "
                     + "ORDER BY s.last_name, s.first_name";
 
+    /**
+     * Вставка нового студента.
+     */
     private static final String INSERT_SQL =
             "INSERT INTO students (first_name, last_name, email, group_id, enrollment_year) "
                     + "VALUES (?, ?, ?, ?, ?) RETURNING id, created_at";
 
+    /**
+     * Оновлення існуючого студента.
+     */
     private static final String UPDATE_SQL =
             "UPDATE students SET first_name = ?, last_name = ?, email = ?, "
                     + "group_id = ?, enrollment_year = ? WHERE id = ?";
 
+    /**
+     * Видалення студента за id.
+     */
     private static final String DELETE_SQL =
             "DELETE FROM students WHERE id = ?";
 
+    /**
+     * Знаходить студента за первинним ключем.
+     *
+     * @param id ідентифікатор студента
+     * @return знайдений {@link Student} або {@code null}, якщо студента не знайдено
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public Student findById(Long id) {
         try (Connection connection = DataSourceProvider.getConnection();
@@ -65,6 +110,12 @@ public class JdbcStudentDao implements StudentDao {
         }
     }
 
+    /**
+     * Повертає повний список усіх студентів.
+     *
+     * @return список студентів (може бути порожнім, але не {@code null})
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public List<Student> findAll() {
         List<Student> result = new ArrayList<>();
@@ -82,6 +133,19 @@ public class JdbcStudentDao implements StudentDao {
         }
     }
 
+    /**
+     * Додає нового студента до таблиці {@code students}.
+     *
+     * <p>Після успішної вставки у переданий об'єкт записуються:
+     * <ul>
+     *     <li>згенерований {@code id}</li>
+     *     <li>значення поля {@code created_at}</li>
+     * </ul>
+     *
+     * @param student об'єкт {@link Student}, що зберігається
+     * @return той самий екземпляр {@link Student} з оновленими полями id/createdAt
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public Student insert(Student student) {
         try (Connection connection = DataSourceProvider.getConnection();
@@ -121,6 +185,14 @@ public class JdbcStudentDao implements StudentDao {
         }
     }
 
+    /**
+     * Оновлює дані про студента.
+     *
+     * @param student об'єкт з оновленими полями (id має бути заповнений)
+     * @return {@code true}, якщо було оновлено хоча б один рядок; {@code false}, якщо id не знайдено
+     * @throws IllegalArgumentException якщо {@code student.getId() == null}
+     * @throws DaoException             у разі помилки доступу до БД
+     */
     @Override
     public boolean update(Student student) {
         if (student.getId() == null) {
@@ -156,6 +228,14 @@ public class JdbcStudentDao implements StudentDao {
         }
     }
 
+    /**
+     * Видаляє студента з таблиці за id.
+     *
+     * @param id ідентифікатор студента
+     * @return {@code true}, якщо студент був видалений;
+     *         {@code false}, якщо запис не знайдений
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public boolean delete(Long id) {
         try (Connection connection = DataSourceProvider.getConnection();
@@ -170,6 +250,13 @@ public class JdbcStudentDao implements StudentDao {
         }
     }
 
+    /**
+     * Повертає список студентів певної групи.
+     *
+     * @param groupId ідентифікатор групи
+     * @return список студентів цієї групи (може бути порожнім)
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public List<Student> findByGroupId(Long groupId) {
         List<Student> result = new ArrayList<>();
@@ -189,6 +276,13 @@ public class JdbcStudentDao implements StudentDao {
         }
     }
 
+    /**
+     * Повертає список студентів, які мають оцінки з певного курсу.
+     *
+     * @param courseId ідентифікатор курсу
+     * @return список студентів (може бути порожнім)
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public List<Student> findByCourseId(Long courseId) {
         List<Student> result = new ArrayList<>();
@@ -208,6 +302,13 @@ public class JdbcStudentDao implements StudentDao {
         }
     }
 
+    /**
+     * Мапить поточний рядок {@link ResultSet} на об'єкт {@link Student}.
+     *
+     * @param rs результат SQL-запиту, позиціонований на потрібному рядку
+     * @return заповнений {@link Student}
+     * @throws SQLException у разі помилки читання даних з {@link ResultSet}
+     */
     private Student mapRow(ResultSet rs) throws SQLException {
         Student student = new Student();
         student.setId(rs.getLong("id"));
@@ -234,4 +335,3 @@ public class JdbcStudentDao implements StudentDao {
         return student;
     }
 }
-

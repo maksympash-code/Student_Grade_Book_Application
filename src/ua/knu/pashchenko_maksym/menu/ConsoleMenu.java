@@ -15,21 +15,58 @@ import ua.knu.pashchenko_maksym.service.ReportService;
 import ua.knu.pashchenko_maksym.util.IoUtil;
 
 /**
- * Simple console menu to interact with grade book.
+ * Консольне меню для взаємодії з системою електронного журналу.
+ *
+ * <p>Через це меню користувач може:
+ * <ul>
+ *     <li>створювати, редагувати та видаляти студентів, групи, курси, викладачів;</li>
+ *     <li>додавати оцінки;</li>
+ *     <li>переглядати звіти по студенту, групі/курсу, викладачу;</li>
+ *     <li>експортувати оцінки у CSV-файли.</li>
+ * </ul>
+ *
+ * Меню працює поверх сервісного шару {@link GradeBookService} і
+ * {@link ReportService}, не містить бізнес-логіки, лише ввод/вивід.
+ *
+ * @author Pashchenko Maksym
+ * @since 26.11.2025
  */
 public class ConsoleMenu {
 
+    /**
+     * Сервісний шар для CRUD-операцій та обчислення середніх оцінок.
+     */
     private final GradeBookService gradeBookService;
+
+    /**
+     * Сервіс формування текстових/CSV-звітів.
+     */
     private final ReportService reportService;
 
+    /**
+     * Базовий каталог для вивантаження CSV-файлів.
+     */
     private static final Path OUTPUT_DIR = Path.of("resources/output");
 
+    /**
+     * Створює консольне меню з переданими сервісами.
+     *
+     * @param gradeBookService сервіс роботи з журналом оцінок
+     * @param reportService    сервіс формування звітів
+     */
     public ConsoleMenu(GradeBookService gradeBookService,
                        ReportService reportService) {
         this.gradeBookService = gradeBookService;
         this.reportService = reportService;
     }
 
+    /**
+     * Головний цикл роботи меню.
+     *
+     * <p>Виводить варіанти дій, читає вибір користувача
+     * та викликає відповідні методи обробки, поки користувач
+     * не обере пункт {@code 0 - Вихід}.
+     */
     public void run() {
         boolean running = true;
         while (running) {
@@ -79,6 +116,9 @@ public class ConsoleMenu {
         }
     }
 
+    /**
+     * Виводить на екран текстове меню з переліком доступних пунктів.
+     */
     private void printMenu() {
         System.out.println("===================================");
         System.out.println("      Student Grade Book Menu      ");
@@ -113,6 +153,11 @@ public class ConsoleMenu {
     // READ: списки
     // ============================
 
+    /**
+     * Виводить на екран усіх студентів із бази.
+     *
+     * <p>Якщо студентів немає, показує відповідне повідомлення.
+     */
     private void listStudents() {
         List<Student> students = gradeBookService.getAllStudents();
         if (students.isEmpty()) {
@@ -129,6 +174,9 @@ public class ConsoleMenu {
         }
     }
 
+    /**
+     * Виводить список усіх академічних груп.
+     */
     private void listGroups() {
         List<Group> groups = gradeBookService.getAllGroups();
         if (groups.isEmpty()) {
@@ -141,6 +189,9 @@ public class ConsoleMenu {
         }
     }
 
+    /**
+     * Виводить список усіх курсів.
+     */
     private void listCourses() {
         List<Course> courses = gradeBookService.getAllCourses();
         if (courses.isEmpty()) {
@@ -153,6 +204,9 @@ public class ConsoleMenu {
         }
     }
 
+    /**
+     * Виводить список усіх викладачів.
+     */
     private void listTeachers() {
         List<Teacher> teachers = gradeBookService.getAllTeachers();
         if (teachers.isEmpty()) {
@@ -169,6 +223,13 @@ public class ConsoleMenu {
     // CREATE
     // ============================
 
+    /**
+     * Обробляє створення нового студента через консоль.
+     *
+     * <p>Читає ім'я, прізвище, email, групу та рік вступу, викликає
+     * {@link GradeBookService#createStudent(String, String, String, Long, int)}
+     * і виводить результат.
+     */
     private void addStudent() {
         System.out.println("=== Додати студента ===");
         String firstName = IoUtil.readNonEmptyLine("Ім'я: ");
@@ -196,6 +257,9 @@ public class ConsoleMenu {
         System.out.println("Студента створено: " + created);
     }
 
+    /**
+     * Обробляє створення нової групи (назва + курс).
+     */
     private void addGroup() {
         System.out.println("=== Додати групу ===");
         String name = IoUtil.readNonEmptyLine("Назва групи: ");
@@ -204,6 +268,12 @@ public class ConsoleMenu {
         System.out.println("Групу створено: " + created);
     }
 
+    /**
+     * Обробляє створення нового курсу.
+     *
+     * <p>Читає назву, семестр, рік, викладача та кількість кредитів
+     * і викликає {@link GradeBookService#createCourse(String, Integer, Integer, Long, Integer)}.
+     */
     private void addCourse() {
         System.out.println("=== Додати курс ===");
         String name = IoUtil.readNonEmptyLine("Назва курсу: ");
@@ -225,6 +295,12 @@ public class ConsoleMenu {
         System.out.println("Курс створено: " + created);
     }
 
+    /**
+     * Обробляє створення нового викладача.
+     *
+     * <p>Читає ім'я, прізвище, кафедру та email і викликає
+     * {@link GradeBookService#createTeacher(String, String, String, String)}.
+     */
     private void addTeacher() {
         System.out.println("=== Додати викладача ===");
         String firstName = IoUtil.readNonEmptyLine("Ім'я: ");
@@ -239,6 +315,10 @@ public class ConsoleMenu {
         System.out.println("Викладача створено: " + created);
     }
 
+    /**
+     * Обробляє додавання оцінки студенту з прив'язкою
+     * до курсу та, за бажанням, викладача.
+     */
     private void addGrade() {
         System.out.println("=== Додати оцінку ===");
 
@@ -267,6 +347,10 @@ public class ConsoleMenu {
     // UPDATE / DELETE
     // ============================
 
+    /**
+     * Редагує існуючого студента:
+     * змінює ПІБ, email, групу та рік вступу.
+     */
     private void editStudent() {
         System.out.println("=== Редагувати студента ===");
         long id = IoUtil.readLong("ID студента: ");
@@ -298,6 +382,9 @@ public class ConsoleMenu {
         System.out.println(ok ? "Студента оновлено." : "Помилка оновлення студента.");
     }
 
+    /**
+     * Видаляє студента за введеним ID.
+     */
     private void deleteStudent() {
         System.out.println("=== Видалити студента ===");
         long id = IoUtil.readLong("ID студента: ");
@@ -305,6 +392,9 @@ public class ConsoleMenu {
         System.out.println(ok ? "Студента видалено." : "Студента з таким ID не знайдено.");
     }
 
+    /**
+     * Редагує дані групи (назва та курс).
+     */
     private void editGroup() {
         System.out.println("=== Редагувати групу ===");
         long id = IoUtil.readLong("ID групи: ");
@@ -325,6 +415,9 @@ public class ConsoleMenu {
         System.out.println(ok ? "Групу оновлено." : "Помилка оновлення групи.");
     }
 
+    /**
+     * Видаляє групу за введеним ID.
+     */
     private void deleteGroup() {
         System.out.println("=== Видалити групу ===");
         long id = IoUtil.readLong("ID групи: ");
@@ -332,6 +425,9 @@ public class ConsoleMenu {
         System.out.println(ok ? "Групу видалено." : "Групу з таким ID не знайдено.");
     }
 
+    /**
+     * Редагує дані курсу (назву, семестр, рік, викладача, кредити).
+     */
     private void editCourse() {
         System.out.println("=== Редагувати курс ===");
         long id = IoUtil.readLong("ID курсу: ");
@@ -358,6 +454,9 @@ public class ConsoleMenu {
         System.out.println(ok ? "Курс оновлено." : "Помилка оновлення курсу.");
     }
 
+    /**
+     * Видаляє курс за введеним ID.
+     */
     private void deleteCourse() {
         System.out.println("=== Видалити курс ===");
         long id = IoUtil.readLong("ID курсу: ");
@@ -365,6 +464,9 @@ public class ConsoleMenu {
         System.out.println(ok ? "Курс видалено." : "Курс з таким ID не знайдено.");
     }
 
+    /**
+     * Редагує дані викладача (ПІБ, департамент, email).
+     */
     private void editTeacher() {
         System.out.println("=== Редагувати викладача ===");
         long id = IoUtil.readLong("ID викладача: ");
@@ -392,6 +494,9 @@ public class ConsoleMenu {
         System.out.println(ok ? "Викладача оновлено." : "Помилка оновлення викладача.");
     }
 
+    /**
+     * Видаляє викладача за введеним ID.
+     */
     private void deleteTeacher() {
         System.out.println("=== Видалити викладача ===");
         long id = IoUtil.readLong("ID викладача: ");
@@ -403,12 +508,20 @@ public class ConsoleMenu {
     // Звіти
     // ============================
 
+    /**
+     * Виводить на екран детальний звіт по студенту:
+     * його оцінки та середній бал (через {@link ReportService}).
+     */
     private void showStudentReport() {
         System.out.println("=== Звіт по студенту ===");
         long studentId = IoUtil.readLong("ID студента: ");
         reportService.printStudentReport(studentId);
     }
 
+    /**
+     * Виводить звіт по конкретній групі та курсу:
+     * усі оцінки студентів цієї групи і середній бал.
+     */
     private void showGroupCourseReport() {
         System.out.println("=== Звіт по групі та курсу ===");
         long groupId = IoUtil.readLong("ID групи: ");
@@ -416,6 +529,10 @@ public class ConsoleMenu {
         reportService.printGroupCourseReport(groupId, courseId);
     }
 
+    /**
+     * Виводить звіт по викладачу:
+     * усі виставлені ним оцінки та середній бал.
+     */
     private void showTeacherReport() {
         System.out.println("=== Звіт по викладачу ===");
         long teacherId = IoUtil.readLong("ID викладача: ");
@@ -426,6 +543,12 @@ public class ConsoleMenu {
     // CSV export helpers
     // ============================
 
+    /**
+     * Експортує всі оцінки студента у CSV-файл в {@link #OUTPUT_DIR}.
+     *
+     * <p>Ім'я файлу має вигляд:
+     * {@code student_<id>_grades.csv}.
+     */
     private void exportStudentGrades() {
         System.out.println("=== Експорт оцінок студента ===");
         long studentId = IoUtil.readLong("ID студента: ");
@@ -439,6 +562,12 @@ public class ConsoleMenu {
         }
     }
 
+    /**
+     * Експортує всі оцінки групи по курсу у CSV-файл.
+     *
+     * <p>Ім'я файлу має вигляд:
+     * {@code group_<groupId>_course_<courseId>_grades.csv}.
+     */
     private void exportGroupCourseGrades() {
         System.out.println("=== Експорт оцінок групи/курсу ===");
         long groupId = IoUtil.readLong("ID групи: ");
@@ -454,6 +583,12 @@ public class ConsoleMenu {
         }
     }
 
+    /**
+     * Експортує всі оцінки, виставлені певним викладачем, у CSV-файл.
+     *
+     * <p>Ім'я файлу має вигляд:
+     * {@code teacher_<teacherId>_grades.csv}.
+     */
     private void exportTeacherGrades() {
         System.out.println("=== Експорт оцінок викладача ===");
         long teacherId = IoUtil.readLong("ID викладача: ");

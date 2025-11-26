@@ -25,15 +25,51 @@ import ua.knu.pashchenko_maksym.service.ReportService;
 import ua.knu.pashchenko_maksym.util.IoUtil;
 
 /**
- * Application entry point.
+ * Точка входу в застосунок "Student Grade Book System".
+ *
+ * <p>Клас відповідає за:
+ * <ul>
+ *     <li>ініціалізацію DAO-рівня ({@link JdbcStudentDao}, {@link JdbcGroupDao}, {@link JdbcCourseDao},
+ *     {@link JdbcTeacherDao}, {@link JdbcGradeDao});</li>
+ *     <li>створення сервісів {@link GradeBookService} та {@link ReportService};</li>
+ *     <li>запуск у одному з двох режимів:
+ *     <ul>
+ *         <li>інтерактивний консольний режим ({@link ConsoleMenu});</li>
+ *         <li>тестовий режим зчитування команд із текстового файлу NZ_test.txt.</li>
+ *     </ul>
+ *     </li>
+ * </ul>
+ *
+ * @author Pashchenko Maksym
+ * @since 26.11.2025
  */
 public class Main {
 
+    /**
+     * Шлях до тестового файлу з командами для тестового режиму.
+     */
     private static final Path TEST_FILE =
             Path.of("resources/testdata/NZ_test.txt");
+
+    /**
+     * Шлях до текстового файлу, куди записується лог виконання тестового сценарію.
+     */
     private static final Path OUTPUT_TEXT_FILE =
             Path.of("resources/output/result.txt");
 
+    /**
+     * Головний метод застосунку.
+     *
+     * <p>Ініціалізує всі DAO, створює сервіси
+     * {@link GradeBookService} та {@link ReportService}, а потім
+     * пропонує користувачу обрати режим запуску:
+     * <ul>
+     *     <li>1 — інтерактивне консольне меню ({@link ConsoleMenu});</li>
+     *     <li>2 — виконання сценарію з файлу {@code NZ_test.txt} ({@link #runTestScript(GradeBookService, ReportService)}).</li>
+     * </ul>
+     *
+     * @param args параметри командного рядка (не використовуються)
+     */
     public static void main(String[] args) {
         StudentDao studentDao = new JdbcStudentDao();
         GroupDao groupDao = new JdbcGroupDao();
@@ -66,7 +102,8 @@ public class Main {
     }
 
     /**
-     * Simple test runner that reads commands from NZ_test.txt and writes summary to result.txt.
+     * Простий тестовий запускач, який читає команди з NZ_test.txt
+     * та записує короткий текстовий лог у result.txt.
      *
      * <p>Формат рядків у NZ_test.txt (приклад):
      *
@@ -81,7 +118,10 @@ public class Main {
      * REPORT_TEACHER;1
      * </pre>
      *
-     * Порожні рядки та рядки, що починаються з #, ігноруються.
+     * Порожні рядки та рядки, що починаються з {@code #}, ігноруються.
+     *
+     * @param gradeBookService сервіс для CRUD-операцій і розрахунків
+     * @param reportService    сервіс для формування звітів
      */
     private static void runTestScript(GradeBookService gradeBookService,
                                       ReportService reportService) {
@@ -153,6 +193,16 @@ public class Main {
     // Test script handlers
     // ============================
 
+    /**
+     * Обробляє команду {@code ADD_GROUP} із тестового файлу.
+     *
+     * <p>Очікуваний формат:
+     * {@code ADD_GROUP;name;year}
+     *
+     * @param parts   розбитий по {@code ;} рядок із файлу
+     * @param service сервіс журналу оцінок
+     * @param log     буфер для запису текстового логу
+     */
     private static void handleAddGroup(String[] parts,
                                        GradeBookService service,
                                        StringBuilder log) {
@@ -166,6 +216,12 @@ public class Main {
         log.append("  OK: created group ").append(g).append('\n');
     }
 
+    /**
+     * Обробляє команду {@code ADD_STUDENT} із тестового файлу.
+     *
+     * <p>Очікуваний формат:
+     * {@code ADD_STUDENT;firstName;lastName;email;groupId;enrollmentYear}
+     */
     private static void handleAddStudent(String[] parts,
                                          GradeBookService service,
                                          StringBuilder log) {
@@ -183,6 +239,12 @@ public class Main {
         log.append("  OK: created student ").append(s).append('\n');
     }
 
+    /**
+     * Обробляє команду {@code ADD_TEACHER} із тестового файлу.
+     *
+     * <p>Очікуваний формат:
+     * {@code ADD_TEACHER;firstName;lastName;department;email}
+     */
     private static void handleAddTeacher(String[] parts,
                                          GradeBookService service,
                                          StringBuilder log) {
@@ -199,6 +261,12 @@ public class Main {
         log.append("  OK: created teacher ").append(t).append('\n');
     }
 
+    /**
+     * Обробляє команду {@code ADD_COURSE} із тестового файлу.
+     *
+     * <p>Очікуваний формат:
+     * {@code ADD_COURSE;name;semester;year;teacherId;credits}
+     */
     private static void handleAddCourse(String[] parts,
                                         GradeBookService service,
                                         StringBuilder log) {
@@ -216,6 +284,13 @@ public class Main {
         log.append("  OK: created course ").append(c).append('\n');
     }
 
+    /**
+     * Обробляє команду {@code SET_GRADE} із тестового файлу.
+     *
+     * <p>Очікуваний формат:
+     * {@code SET_GRADE;studentId;courseId;teacherIdOr0;value;date}
+     * (якщо {@code teacherIdOr0 = 0}, оцінка не прив'язується до викладача).
+     */
     private static void handleSetGrade(String[] parts,
                                        GradeBookService service,
                                        StringBuilder log) {
@@ -241,6 +316,10 @@ public class Main {
         }
     }
 
+    /**
+     * Обробляє команду {@code REPORT_STUDENT}:
+     * рахує середній бал студента і формує звіт.
+     */
     private static void handleReportStudent(String[] parts,
                                             ReportService reportService,
                                             GradeBookService service,
@@ -256,6 +335,10 @@ public class Main {
         reportService.printStudentReport(studentId);
     }
 
+    /**
+     * Обробляє команду {@code REPORT_GROUP_COURSE}:
+     * рахує середній бал групи по курсу і формує звіт.
+     */
     private static void handleReportGroupCourse(String[] parts,
                                                 ReportService reportService,
                                                 GradeBookService service,
@@ -273,6 +356,10 @@ public class Main {
         reportService.printGroupCourseReport(groupId, courseId);
     }
 
+    /**
+     * Обробляє команду {@code REPORT_TEACHER}:
+     * рахує середній бал оцінок, виставлених викладачем, і формує звіт.
+     */
     private static void handleReportTeacher(String[] parts,
                                             ReportService reportService,
                                             GradeBookService service,
@@ -289,6 +376,10 @@ public class Main {
         reportService.printTeacherReport(teacherId);
     }
 
+    /**
+     * Хендлер редагування студента для інтерактивного режиму
+     * (не використовується у тестовому файлі).
+     */
     private static void handleEditStudent(GradeBookService service) {
         long id = IoUtil.readLong("ID студента для редагування: ");
         Student student = service.getStudentById(id);
@@ -315,12 +406,18 @@ public class Main {
         System.out.println(ok ? "Студента оновлено." : "Помилка оновлення студента.");
     }
 
+    /**
+     * Хендлер видалення студента для інтерактивного режиму.
+     */
     private static void handleDeleteStudent(GradeBookService service) {
         long id = IoUtil.readLong("ID студента для видалення: ");
         boolean ok = service.deleteStudent(id);
         System.out.println(ok ? "Студента видалено." : "Студента з таким ID не знайдено.");
     }
 
+    /**
+     * Хендлер редагування групи для інтерактивного режиму.
+     */
     private static void handleEditGroup(GradeBookService service) {
         long id = IoUtil.readLong("ID групи для редагування: ");
         Group group = service.getGroupById(id);
@@ -341,12 +438,18 @@ public class Main {
         System.out.println(ok ? "Групу оновлено." : "Помилка оновлення групи.");
     }
 
+    /**
+     * Хендлер видалення групи для інтерактивного режиму.
+     */
     private static void handleDeleteGroup(GradeBookService service) {
         long id = IoUtil.readLong("ID групи для видалення: ");
         boolean ok = service.deleteGroup(id);
         System.out.println(ok ? "Групу видалено." : "Групу з таким ID не знайдено.");
     }
 
+    /**
+     * Хендлер редагування курсу для інтерактивного режиму.
+     */
     private static void handleEditCourse(GradeBookService service) {
         long id = IoUtil.readLong("ID курсу для редагування: ");
         Course course = service.getCourseById(id);
@@ -373,12 +476,18 @@ public class Main {
         System.out.println(ok ? "Курс оновлено." : "Помилка оновлення курсу.");
     }
 
+    /**
+     * Хендлер видалення курсу для інтерактивного режиму.
+     */
     private static void handleDeleteCourse(GradeBookService service) {
         long id = IoUtil.readLong("ID курсу для видалення: ");
         boolean ok = service.deleteCourse(id);
         System.out.println(ok ? "Курс видалено." : "Курс з таким ID не знайдено.");
     }
 
+    /**
+     * Хендлер редагування викладача для інтерактивного режиму.
+     */
     private static void handleEditTeacher(GradeBookService service) {
         long id = IoUtil.readLong("ID викладача для редагування: ");
         Teacher teacher = service.getTeacherById(id);
@@ -403,12 +512,18 @@ public class Main {
         System.out.println(ok ? "Викладача оновлено." : "Помилка оновлення викладача.");
     }
 
+    /**
+     * Хендлер видалення викладача для інтерактивного режиму.
+     */
     private static void handleDeleteTeacher(GradeBookService service) {
         long id = IoUtil.readLong("ID викладача для видалення: ");
         boolean ok = service.deleteTeacher(id);
         System.out.println(ok ? "Викладача видалено." : "Викладача з таким ID не знайдено.");
     }
 
+    /**
+     * Хендлер для виводу всіх груп (інтерактивний режим).
+     */
     private static void handleShowAllGroups(GradeBookService service) {
         List<Group> groups = service.getAllGroups();
         if (groups.isEmpty()) {
@@ -421,6 +536,9 @@ public class Main {
         }
     }
 
+    /**
+     * Хендлер для виводу всіх курсів (інтерактивний режим).
+     */
     private static void handleShowAllCourses(GradeBookService service) {
         List<Course> courses = service.getAllCourses();
         if (courses.isEmpty()) {
@@ -433,6 +551,9 @@ public class Main {
         }
     }
 
+    /**
+     * Хендлер для виводу всіх викладачів (інтерактивний режим).
+     */
     private static void handleShowAllTeachers(GradeBookService service) {
         List<Teacher> teachers = service.getAllTeachers();
         if (teachers.isEmpty()) {

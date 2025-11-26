@@ -1,37 +1,86 @@
 package ua.knu.pashchenko_maksym.dao;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
 import ua.knu.pashchenko_maksym.dao.exception.DaoException;
 import ua.knu.pashchenko_maksym.model.Teacher;
 
+/**
+ * JDBC-реалізація {@link TeacherDao} для таблиці {@code teachers}.
+ *
+ * <p>Надає базові CRUD-операції:
+ * <ul>
+ *     <li>пошук викладача за id;</li>
+ *     <li>отримання списку всіх викладачів;</li>
+ *     <li>пошук за прізвищем;</li>
+ *     <li>додавання, оновлення та видалення викладачів.</li>
+ * </ul>
+ *
+ * Працює без ORM, напряму через JDBC та {@link DataSourceProvider}.
+ *
+ * @author Pashchenko Maksym
+ * @since 26.11.2025
+ */
 public class JdbcTeacherDao implements TeacherDao {
 
+    /**
+     * Базовий SELECT із потрібними колонками.
+     */
     private static final String SELECT_BASE =
             "SELECT id, first_name, last_name, department, email FROM teachers ";
 
+    /**
+     * Пошук викладача за id.
+     */
     private static final String SELECT_BY_ID =
             SELECT_BASE + "WHERE id = ?";
 
+    /**
+     * Отримання всіх викладачів.
+     */
     private static final String SELECT_ALL =
             SELECT_BASE + "ORDER BY last_name, first_name";
 
+    /**
+     * Пошук викладачів з певним прізвищем.
+     */
     private static final String SELECT_BY_LAST_NAME =
             SELECT_BASE + "WHERE last_name = ? ORDER BY first_name";
 
+    /**
+     * Вставка нового викладача.
+     */
     private static final String INSERT_SQL =
             "INSERT INTO teachers(first_name, last_name, department, email) " +
                     "VALUES (?, ?, ?, ?)";
 
+    /**
+     * Оновлення даних викладача.
+     */
     private static final String UPDATE_SQL =
             "UPDATE teachers SET first_name = ?, last_name = ?, department = ?, email = ? "
                     + "WHERE id = ?";
 
+    /**
+     * Видалення викладача за id.
+     */
     private static final String DELETE_SQL =
             "DELETE FROM teachers WHERE id = ?";
 
+    /**
+     * Знаходить викладача за первинним ключем.
+     *
+     * @param id ідентифікатор викладача
+     * @return {@link Teacher} або {@code null}, якщо не знайдено
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public Teacher findById(Long id) {
         try (Connection connection = DataSourceProvider.getConnection();
@@ -50,6 +99,12 @@ public class JdbcTeacherDao implements TeacherDao {
         }
     }
 
+    /**
+     * Повертає список усіх викладачів.
+     *
+     * @return список викладачів (може бути порожнім, але не {@code null})
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public List<Teacher> findAll() {
         List<Teacher> result = new ArrayList<>();
@@ -67,6 +122,13 @@ public class JdbcTeacherDao implements TeacherDao {
         }
     }
 
+    /**
+     * Повертає список викладачів із заданим прізвищем.
+     *
+     * @param lastName прізвище для пошуку (повний збіг)
+     * @return список викладачів з таким прізвищем (може бути порожнім)
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public List<Teacher> findByLastName(String lastName) {
         List<Teacher> result = new ArrayList<>();
@@ -86,6 +148,17 @@ public class JdbcTeacherDao implements TeacherDao {
         }
     }
 
+    /**
+     * Додає нового викладача до таблиці {@code teachers}.
+     *
+     * <p>Після успішної вставки вказаному об'єкту встановлюється
+     * згенерований {@code id}.
+     *
+     * @param teacher об'єкт {@link Teacher}, який необхідно зберегти
+     * @return той самий екземпляр {@link Teacher} з оновленим полем {@code id}
+     * @throws IllegalArgumentException якщо {@code teacher == null}
+     * @throws DaoException             у разі помилки доступу до БД
+     */
     @Override
     public Teacher insert(Teacher teacher) {
         if (teacher == null) {
@@ -100,7 +173,7 @@ public class JdbcTeacherDao implements TeacherDao {
             ps.setString(1, teacher.getFirstName());
             ps.setString(2, teacher.getLastName());
             ps.setString(3, teacher.getDepartment());
-            ps.setString(4, teacher.getEmail()); // <-- тепер колонка є
+            ps.setString(4, teacher.getEmail());
 
             int affected = ps.executeUpdate();
             if (affected == 0) {
@@ -122,7 +195,15 @@ public class JdbcTeacherDao implements TeacherDao {
         }
     }
 
-
+    /**
+     * Оновлює дані викладача.
+     *
+     * @param teacher об'єкт із новими полями (id має бути заповненим)
+     * @return {@code true}, якщо було оновлено хоча б один рядок;
+     *         {@code false}, якщо викладача з таким id не знайдено
+     * @throws IllegalArgumentException якщо {@code teacher.getId() == null}
+     * @throws DaoException             у разі помилки доступу до БД
+     */
     @Override
     public boolean update(Teacher teacher) {
         if (teacher.getId() == null) {
@@ -157,6 +238,14 @@ public class JdbcTeacherDao implements TeacherDao {
         }
     }
 
+    /**
+     * Видаляє викладача за id.
+     *
+     * @param id ідентифікатор викладача
+     * @return {@code true}, якщо запис був видалений;
+     *         {@code false}, якщо викладача з таким id немає
+     * @throws DaoException у разі помилки доступу до БД
+     */
     @Override
     public boolean delete(Long id) {
         try (Connection connection = DataSourceProvider.getConnection();
@@ -171,6 +260,13 @@ public class JdbcTeacherDao implements TeacherDao {
         }
     }
 
+    /**
+     * Мапить поточний рядок {@link ResultSet} у доменний об'єкт {@link Teacher}.
+     *
+     * @param rs результат виконання SQL-запиту, позиціонований на потрібному рядку
+     * @return екземпляр {@link Teacher}, заповнений даними з поточного рядка
+     * @throws SQLException у разі помилки читання даних із {@link ResultSet}
+     */
     private Teacher mapRow(ResultSet rs) throws SQLException {
         Teacher teacher = new Teacher();
         teacher.setId(rs.getLong("id"));
@@ -181,4 +277,3 @@ public class JdbcTeacherDao implements TeacherDao {
         return teacher;
     }
 }
-
