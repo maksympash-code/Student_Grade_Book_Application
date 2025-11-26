@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS grades (
                                       id          BIGSERIAL PRIMARY KEY,
                                       student_id  BIGINT  NOT NULL REFERENCES students(id) ON DELETE CASCADE,
                                       course_id   BIGINT  NOT NULL REFERENCES courses(id)  ON DELETE CASCADE,
-                                      value       NUMERIC(4,2) NOT NULL CHECK (value >= 0 AND value <= 100),
+                                      value       NUMERIC(5,2) NOT NULL CHECK (value >= 0 AND value <= 100),
                                       grade_date  DATE        NOT NULL DEFAULT CURRENT_DATE,
                                       teacher_id  BIGINT      REFERENCES teachers(id) ON DELETE SET NULL
 );
